@@ -6,159 +6,101 @@ let dir = path.join(__dirname, "./lipsum.txt");
 
 // Reads the file "lipsum.txt" in UTF-8 encoding
 
-function readFile() {
+async function readFile() {
   // creates a new promise to read the file asynchronously
-  return new Promise((resolve, reject) => {
-    fs.readFile(dir, "utf-8", (err, data) => {
-      if (err) {
-        // Reject the promise if there is an error
-        reject("Error in reading file");
-      } else {
-        // Resolve the promise with the file content if reading is successful
-        resolve(data);
-      }
-    });
-  });
+  try {
+    let data = await fs.promises.readFile(dir, "utf-8");
+    console.log("Successfully reads the content");
+    return data;
+  } catch (err) {
+    throw new Error("Error in reading file");
+  }
 }
 
 // 2. Convert the content to uppercase & write to a new file. Store the name of the new file in filenames.txt
-function upperCase(content) {
-  return new Promise((resolve, reject) => {
-    // Convert the content to uppercase
-    let upperCaseContent = content.toUpperCase();
+
+async function upperCase(content) {
+  try {
+    // convert the content to uppercase
+    let uppercaseContent = content.toUpperCase();
     let filePath = path.join(__dirname, "uppercase.txt");
 
-    // Write the uppercase content to a new file
-    fs.writeFile(filePath, upperCaseContent, (err) => {
-      if (err) {
-        reject("Error in writing upperCase file");
-      } else {
-        console.log("uppercase.txt file created successfully");
+    // write uppercase file
+    await fs.promises.writeFile(filePath, uppercaseContent);
+    console.log("Successfully writes uppercase file");
 
-        fs.appendFile("./filename.txt", "uppercase.txt", (err) => {
-          if (err) {
-            reject("Error in appending file name");
-          } else {
-            console.log("uppercase.txt filename appends into filename.txt");
-            resolve(filePath);
-          }
-        });
-      }
-    });
-  });
-}
-// 3. Read the new file and convert it to lower case. Then split the contents into sentences. Then write it to a new file. Store the name of the new file in filenames.txt
-
-function lowerCaseAndSplit(filePath) {
-  return new Promise((resolve, reject) => {
-    // Read the content of the file specified by 'filePath'
-    fs.readFile(filePath, "utf-8", (err, content) => {
-      if (err) {
-        reject("Error in reading file at converting file into lowercase");
-      } else {
-        // Convert content to lowercase and split it into sentences
-        let splittedContent = content.toLowerCase().split(".").join("\n");
-        let filePath = path.join(__dirname, "lowercaseSplitted.txt");
-
-        // Write the transformed content to a new file
-        fs.writeFile(filePath, splittedContent, (err) => {
-          if (err) {
-            reject("Error in writing lowercase splitted  file");
-          } else {
-            console.log("LowercaseSplitted file created successfully ");
-            fs.appendFile(
-              "./filename.txt",
-              "\nlowercaseSplitted.txt",
-              (err) => {
-                if (err) {
-                  reject("Error in appending the lowercase File");
-                } else {
-                  console.log(
-                    "LowercasesSplitted file appends into filename.txt"
-                  );
-                  resolve(filePath);
-                }
-              }
-            );
-          }
-        });
-      }
-    });
-  });
+    // appends the uppercase filename in filename.txt
+    await fs.promises.appendFile("./filename.txt", "uppercase.txt");
+    console.log("Successfully appends uppercase.txt into filename.txt");
+    return filePath;
+  } catch (err) {
+    // handles error
+    throw new Error("Error in uppercase");
+  }
 }
 
-// Read the new files, sort the content, write it out to a new file. Store the name of the new file in filenames.txt
+async function lowerCaseAndSplit(filePath) {
+  try {
+    // read the content
+    let data = await fs.promises.readFile(filePath, "utf-8");
 
-function sortedContent(filepath) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filepath, "utf-8", (err, data) => {
-      if (err) {
-        reject("Error in reading file while sorting the content");
-      }
+    // Convert content to lowercase and split sentences into new lines
+    let content = data.toLowerCase().split(".").join("\n");
 
-      let filePath = path.join(__dirname, "sortedContent.txt");
-      // Sort the content and join sentences with newline characters
-      let sortedContent = data.split(".").sort().join("\n");
+    let newFilePath = path.join(__dirname, "/lowerCaseSplit.txt");
 
-      fs.writeFile(filePath, sortedContent, (err) => {
-        if (err) {
-          reject("Error in writing the sorted file");
-        } else {
-          fs.appendFile("./filename.txt", "\nsortedContent.txt", (err) => {
-            if (err) {
-              reject(
-                "Error in appending sortedContent file name in filename.txt"
-              );
-            } else {
-              console.log(
-                "sortedContent file name successfully appends into filename.txt"
-              );
-              resolve(filePath);
-            }
-          });
-        }
-      });
-    });
-  });
+    // write file which transformed now
+    await fs.promises.writeFile(newFilePath, content);
+    console.log("Successfully write splitted lowercase.txt");
+
+    // Append the new file name to filenames.txt
+    await fs.promises.appendFile("./filename.txt", "\nlowerCaseSplit.txt");
+    console.log("Successfully append lowerCaseSplit.txt");
+    return newFilePath;
+  } catch (err) {
+    // Handles any error in the lowercase/split process
+    throw new Error("Error in lowerCaseSplit function");
+  }
+}
+// 4. Read the new files, sort the content, write it out to a new file. Store the name of the new file in filenames.txt
+async function sortedContent(filePath) {
+  try {
+    // Read the content
+    let data = await fs.promises.readFile(filePath, "utf-8");
+    // Sort the content and format with new lines
+    let content = data.split(".").sort().join("\n");
+    let newFilePath = path.join(__dirname, "./sortedContent.txt");
+
+    // write the sorted files
+    await fs.promises.writeFile(newFilePath, content);
+    console.log("Successfully writes file of sortedContent");
+
+    // append the file to filename.txt
+    await fs.promises.appendFile("./filename.txt", "\nsortedContent.txt");
+    console.log("Successfully appends sortedContent");
+  } catch (err) {
+    throw new Error("Error in sorted file");
+  }
 }
 
-// Function to delete all files listed in filenames.txt
-function deleteAllFiles() {
-  return new Promise((resolve, reject) => {
-    // Read the contents of the filenames.txt to get the list of files to delete
-    let filePath = path.join(__dirname, "./filename.txt");
-    fs.readFile(filePath, "utf-8", (err, files) => {
-      if (err) {
-        // Reject the promise if there is an error reading filenames.txt
-        reject("Error in reading the file to delete");
-      } else {
-        let allFiles = files.split("\n");
-        // Create a delete promise for each file
-        let deletePromise = allFiles.map((file) => {
-          return new Promise((resolve, reject) => {
-            fs.unlink(file, (err) => {
-              if (err) {
-                reject("Error in deleting files");
-              } else {
-                console.log(`${file} deleted`);
-                resolve();
-              }
-            });
-          });
-        });
+//delete function
 
-        // Wait for all delete promises to resolve
-        Promise.all(deletePromise)
-          .then(() => {
-            console.log("All files got deleted");
-            resolve();
-          })
-          .catch((err) => {
-            reject(err);
-          });
-      }
-    });
-  });
+async function deleteAllFiles() {
+  try {
+    // Read the list of filenames to delete
+    let files = await fs.promises.readFile("./filename.txt", "utf-8");
+    let allFiles = files.split("\n");
+
+    // Loop through the file list and delete each one
+    for (let file of allFiles) {
+      await fs.promises.unlink(file);
+      console.log(`${file} deleted successfully`);
+    }
+    console.log("All files deleted");
+  } catch (err) {
+    // handles error
+    throw new Error("Error in deleting files");
+  }
 }
 
 // Export all the functions to be used in other modules

@@ -1,3 +1,4 @@
+
 let {
   readFile,
   upperCase,
@@ -6,22 +7,17 @@ let {
   deleteAllFiles,
 } = require("../problem2");
 
-readFile()
-  .then((content) => {
-    return upperCase(content);
-  })
-  .then((filePath) => {
-    return lowerCaseAndSplit(filePath);
-  })
-  .then((filePath) => {
-    return sortedContent(filePath);
-  })
-  .then(() => {
-    return deleteAllFiles();
-  })
-  .then(() => {
-    console.log("All operation successfully done");
-  })
-  .catch((err) => {
-    console.error(err);
-  });
+
+(async () =>{
+  try{
+    const content = await readFile();
+    const upperCaseFilePath = await upperCase(content);
+    const lowercaseFilePath = await lowerCaseAndSplit(upperCaseFilePath );
+     await sortedContent(lowercaseFilePath ) ;
+     await deleteAllFiles()
+    console.log("All operation successfully done")
+  }
+  catch(err){
+    console.error("Error occured;",err)
+  }
+})();
