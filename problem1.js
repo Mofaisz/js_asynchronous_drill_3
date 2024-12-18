@@ -1,5 +1,5 @@
 // Using fs.promises for asynchronous file operations
-const fs = require("fs").promises;
+const fs = require("fs");
 
 const path = require("path");
 
@@ -10,65 +10,91 @@ const dirName = "Random-Json-file";
 
 // function to create a files
 function createFiles() {
-  // creates a directory if it doesn't exist
-  return fs
-    .mkdir(dir, { recursive: true })
-    .then(() => {
-      console.log(`${dirName} created successfully`);
+  // creates a new promise to handle asynchronous operations
+  return new Promise((resolve, reject) => {
+    // creates a directory if it doesn't exist
+    return fs.mkdir(dir, { recursive: true }, (err) => {
+      // Reject the promise if there is an error creating the directory
+      if (err) {
+        reject("Error in making directory");
+      } else {
+        console.log("Directory created successfully");
 
-      // Array to hold promises for file creation
-      let promiseFile = [];
-      for (let index = 1; index < totalFiles + 1; index++) {
-        // file path for each file
-        let filePath = path.join(dir, `file${index}.json`);
-        let content = JSON.stringify({ id: 1, val: Math.random() });
-        // Adds the write file to promise to the array
-        promiseFile.push(fs.writeFile(filePath, content));
-        console.log(`file${index}.json created`);
-      }
-      //   Wait for all file creation promises to resolve
-      return Promise.all(promiseFile);
-    })
-    .then(() => {
-      console.log(`All ${totalFiles} files created`);
-      return;
-    })
-    .catch((err) => {
-      console.error("Error in creating files");
-      throw err;
-    });
-}
-
-// Function to delete all files in the specified directory
-function deleteFiles() {
-  // Read all files in the directory
-  return fs.readdir(dir).then((files) => {
-    console.log("Files started Reading");
-    // Map over each file and delete it
-    const deletePromiseFile = files.map((file) => {
-      let filePath = path.join(dir, file);
-      return fs
-        .unlink(filePath)
-        .then(() => {
-          console.log(`${file} got deleted`);
-        })
-        .catch((err) => {
-          console.error("Error in deleting files");
-          throw err;
-        });
-    });
-    // waits for all file deletion
-    return Promise.all(deletePromiseFile)
-      .then(() => {
-        console.log("All the files got deleted");
-      })
-      .catch((err) => {
-        if (err) {
-          console.error("Error reading directory", err);
-          throw err;
+        // Array to hold promises for each file
+        let promiseFile = [];
+        for (let index = 1; index < totalFiles + 1; index++) {
+          // file path for each file
+          let filePath = path.join(dir, `file${index}.json`);
+          let content = JSON.stringify({ id: 1, val: Math.random() });
+          // Adds the write file to promise to the array
+          promiseFile.push(
+            new Promise((resolve, reject) => {
+              fs.writeFile(filePath, content, (err) => {
+                if (err) {
+                  reject("Error in writing files");
+                } else {
+                  console.log(`file${index}.json created`);
+                  resolve();
+                }
+              });
+            })
+          );
         }
-      });
+        // Wait for all file creation promises to resolve
+        Promise.all(promiseFile)
+          .then(() => {
+            // Resolve the main promise once all files are created
+            resolve("All files created successfully");
+          })
+          .catch(() => {
+            // Reject the main promise if there was an error creating any file
+            reject("Error in creating files");
+          });
+      }
+    });
   });
 }
 
-module.exports = { createFiles, deleteFiles };
+// Function to delete all files in the specified directory
+function deleteAllFiles() {
+  return new Promise((resolve, reject) => {
+    // Read the contents of the directory to get the list of files
+    fs.readdir(dir, "utf-8", (err, files) => {
+      if (err) {
+        reject("Error in reading the files to delete");
+      } else {
+        console.log("Started reading files");
+        // Map over the files and create a delete promise for each file
+        let deletePromiseFiles = files.map((file) => {
+          return new Promise((resolve, reject) => {
+            let filePath = path.join(dir, file);
+            // Delete the file asynchronously
+            fs.unlink(filePath, (err) => {
+              if (err) {
+                reject("Error in deleting files");
+              } else {
+                console.log(`${file} deleted successfully`);
+                resolve();
+              }
+            });
+          });
+        });
+
+        Promise.all(deletePromiseFiles)
+          .then(() => {
+            // Resolve the main promise once all files are deleted
+            console.log("All files deleted successfully");
+            resolve();
+          })
+          .catch((err) => {
+            // Reject the main promise if there was an error deleting any file
+            console.error("Error in deleting files");
+            reject(err);
+          });
+      }
+    });
+  });
+}
+
+
+module.exports = { createFiles, deleteAllFiles };
